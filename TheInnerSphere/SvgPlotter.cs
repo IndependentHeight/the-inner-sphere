@@ -64,8 +64,16 @@ internal class SvgPlotter
         _overlays.Add(svg);
     }
 
-    public void Add(PlanetInfo system)
+    public void Add(SystemCoordinates coordinates, string text)
     {
+        (double transformedX, double transformedY) = TransformCoordinates(coordinates);
+        string label = $"<text x=\"{transformedX}\" y=\"{transformedY}\" fill=\"#eeeeee\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"{_primaryFontSize}\" stroke=\"black\" stroke-width=\"0.25\">{text}</text>";
+        _text.Add(label);
+    }
+
+    public bool Add(PlanetInfo system)
+    {
+        bool systemAdded = false;
         (double transformedX, double transformedY) = TransformCoordinates(system.Coordinates);
 
         var color = "#ffffff";
@@ -120,11 +128,15 @@ internal class SvgPlotter
             }
 
             _systems.Add(system);
+            systemAdded = true;
         }
         else if (transformedX > (0 - overshoot) && transformedX < (_width + overshoot) && transformedY > (0 - overshoot) && transformedY < (_height + overshoot))
         {
             _systems.Add(system);
+            systemAdded = true;
         }
+
+        return systemAdded;
     }
 
     public void Write(string file)

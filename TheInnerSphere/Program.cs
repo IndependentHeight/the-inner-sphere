@@ -268,10 +268,13 @@ internal class Program
         };
 
         Console.Write("Creating map...");
+        var factionCenters = new Dictionary<string, RunningAverageCoordinates>();
         var plotter = new SvgPlotter(plotterSettings);
         foreach (var id in planetRepo.GetPlanetIds())
         {
             var planet = planetRepo.GetPlanetInfo(id);
+
+            var faction = factionRepo.GetFactionInfo(planet.Owners.GetOwner());
 
             var plotPlanet = false;
 
@@ -281,7 +284,7 @@ internal class Program
             }
             else
             {
-                var faction = factionRepo.GetFactionInfo(planet.Owners.GetOwner());
+                
                 
                 plotPlanet = true;
                 if (!settings.IncludeAbandonedSystems && faction.Id == "A")
@@ -300,7 +303,25 @@ internal class Program
 
             if (plotPlanet)
             {
-                plotter.Add(planet);
+                var inScope = plotter.Add(planet);
+                if (inScope)
+                {
+                    if (faction.Id != "A" && faction.Id != "U" && faction.Id != "" && faction.Id != "?" && faction.Id != "D" && faction.Id != "C" && faction.Id != "I")
+                    {
+                        if (!factionCenters.ContainsKey(faction.Id))
+                        {
+                            factionCenters[faction.Id] = new RunningAverageCoordinates();
+                        }
+                        factionCenters[faction.Id].AddValue(planet.Coordinates);
+                        if (planet.Owners.GetOwnershipNote().ToLower().Contains("faction capital"))
+                        {
+                            for (int i = 0; i < 99; i++ )
+                            {
+                                factionCenters[faction.Id].AddValue(planet.Coordinates);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -311,6 +332,12 @@ internal class Program
         foreach (var circle in overlays.Circles)
         {
             plotter.Add(circle);
+        }
+
+        // TEMP
+        foreach (var factionId in factionCenters.Keys)
+        {
+            plotter.Add(factionCenters[factionId].Average, factionRepo.GetFactionInfo(factionId).Name);
         }
 
         if (!Directory.Exists("../output"))

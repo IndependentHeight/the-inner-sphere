@@ -1,3 +1,6 @@
+using System.ComponentModel;
+using System.Data;
+
 internal class SvgPlotter
 {
     public SvgPlotter(PlotterSettings settings)
@@ -62,6 +65,30 @@ internal class SvgPlotter
         string svg = $"<circle cx=\"{transformedX}\" cy=\"{transformedY}\" r=\"{transformedRadius}\" fill-opacity=\"0\" stroke=\"#cccccc\" />";
 
         _overlays.Add(svg);
+    }
+
+    public void AddHexGrid()
+    {
+        var rows = (int)Math.Ceiling(_height / (_scale * 30));
+        var columns = (int)Math.Ceiling(_width / (_scale * 30 / Math.Sqrt(3)));
+
+        if (rows % 2 == 0) { rows = rows + 1; }
+
+        var grid = new HexGrid();
+        var hexes = grid.GenerateGrid(new SystemCoordinates(0,0), rows, columns, 30);
+
+        foreach (var hex in hexes)
+        {
+            var points = new List<SystemCoordinates>();
+            foreach (var point in hex.Points)
+            {
+                (double transformedX, double transformedY) = TransformCoordinates(point);
+                points.Add(new SystemCoordinates(transformedX, transformedY));
+            }
+
+            var svg = $"<polygon points=\"{points[0].X},{points[0].Y} {points[1].X},{points[1].Y} {points[2].X},{points[2].Y} {points[3].X},{points[3].Y} {points[4].X},{points[4].Y} {points[5].X},{points[5].Y} {points[0].X},{points[0].Y}\" fill=\"none\" stroke=\"#aaaaaa\" stroke-width=\"1.5\" />";
+            _overlays.Add(svg);
+        }
     }
 
     public void Add(PlanetInfo system)

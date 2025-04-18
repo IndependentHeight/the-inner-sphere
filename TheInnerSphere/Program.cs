@@ -313,6 +313,7 @@ internal class Program
         {
             plotter.Add(circle);
         }
+        plotter.AddHexGrid();
 
         if (!Directory.Exists("../output"))
         {
